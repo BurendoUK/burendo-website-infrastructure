@@ -1,0 +1,12 @@
+locals {
+  environment = terraform.workspace == "default" ? "burendo-prod" : terraform.workspace
+  account = { {% for key, value in accounts.items() %}
+     {{key}} = "{{value.number}}"{% endfor %}
+    }
+
+  tags = {
+    Environment = local.environment
+    Company     = "Burendo"
+    Practice    = "Engineering"
+  }
+}
