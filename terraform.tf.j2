@@ -3,7 +3,7 @@ terraform {
 
   backend "s3" {
     bucket         = "{{terraform.state_file_bucket}}"
-    key            = "terraform/burendo/example.tfstate"
+    key            = "terraform/burendo/burendo-website.tfstate"
     region         = "{{terraform.state_file_region}}"
     encrypt        = false
     dynamodb_table = "terraform-state-lock"

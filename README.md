@@ -1,18 +1,8 @@
-# burendo-repo-template-terraform
-This repo contains Makefile to fit the standard pattern. This repo is a base to create new Terraform repos, adding the githooks submodule, making the repo ready for use.  After cloning this repo, please run: make bootstrap
+# Completed infrastructure
 
-## Usage
+Try not to look at these files unless you are really stuck. You'll learn best through trial and error.
 
-### First run
-`pip3 install -r requirements.txt`
+## Important notes
+The 'completed' Terraform is NOT Production ready. It has been created as an MVP to demonstrate the power of IaC.
 
-### Bootstrap
-
-Replace any mentions of `example` with the name of your new repository, e.g. `burendo-my-service`
-
-Create your AWS session with the cli, and assume the `Administrator` role. For this I personally use [awsume](https://awsu.me/).
-
-then:
-
-`make bootstrap`
-`terraform init`
+See [wordpress-infra-creation](../wordpress-infra-creation.md) for detailed look at the limitations currently known and potentially how to resolve.
