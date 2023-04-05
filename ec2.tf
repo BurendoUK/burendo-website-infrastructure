@@ -47,6 +47,7 @@ resource "aws_launch_template" "wordpress_srv" {
         wordpress_admin_secret_id    = "${aws_secretsmanager_secret.wordpress_rds_admin.name}"
         wordpress_password_secret_id = "${aws_secretsmanager_secret.wordpress_rds_password.name}"
         wordpress_rds_host_id        = "${aws_db_instance.wordpress_db.identifier}"
+        website_asset_bucket         = "${aws_s3_bucket.website_assets.id}"
       }
     )
   )

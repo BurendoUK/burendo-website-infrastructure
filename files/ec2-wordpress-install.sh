@@ -30,88 +30,13 @@ sudo yum-config-manager --enable remi-php81
 sudo yum install
 sudo yum install mysql -y
 sudo yum install php81 php81-php-fpm php81-php-mysqlnd -y
-sudo yum install jq -y
+sudo yum install jq git -y
 sudo amazon-linux-extras install nginx1 -y
 
-# Configure NGINX
-touch /etc/nginx/conf.d/wordpress.conf
-sudo cat <<EOF | sudo tee /etc/nginx/nginx.conf
-user nginx;
-worker_processes auto;
-error_log /var/log/nginx/error.log;
-pid /run/nginx.pid;
+# Fetch NGINX from S3
 
-include /usr/share/nginx/modules/*.conf;
-
-events {
-    worker_connections 1024;
-}
-
-http {
-    log_format  main  '\$remote_addr - \$remote_user [\$time_local] "\$request" '
-                      '\$status \$body_bytes_sent "\$http_referer" '
-                      '"\$http_user_agent" "\$http_x_forwarded_for"';
-
-    access_log  /var/log/nginx/access.log  main;
-
-    sendfile            on;
-    tcp_nopush          on;
-    tcp_nodelay         on;
-    keepalive_timeout   65;
-    types_hash_max_size 4096;
-
-    include             /etc/nginx/mime.types;
-    default_type        application/octet-stream;
-
-    # Load modular configuration files from the /etc/nginx/conf.d directory.
-    # See http://nginx.org/en/docs/ngx_core_module.html#include
-    # for more information.
-    include /etc/nginx/conf.d/*.conf;
-
-    server {
-        listen       80;
-        server_name  _;
-        root         /usr/share/nginx/html;
-
-        # Load configuration files for the default server block.
-        include /etc/nginx/default.d/*.conf;
-
-        error_page 404 /404.html;
-        location = /404.html {
-        }
-
-        error_page 500 502 503 504 /50x.html;
-        location = /50x.html {
-        }
-    }
-}
-EOF
-
-sudo cat <<EOF | sudo tee /etc/nginx/conf.d/wordpress.conf
-server {
-    listen 80 default_server;
-    root /var/www/html;
-
-    index index.php index.html index.htm;
-
-    location / {
-        try_files \$uri \$uri/ /index.php?q=\$uri&\$args;
-    }
-
-    location ~* /(?:uploads|files)/.*\.php$ {
-        deny all;
-    }
-    # REQUIREMENTS : Enable PHP Support
-    location ~ \.php$ {
-        try_files \$uri =404;
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        fastcgi_pass unix:/var/run/php-fpm.sock;
-        fastcgi_index index.php;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-    }
-}
-EOF
+aws s3 cp $${website_asset_bucket}/config/nginx/nginx.conf /etc/nginx/nginx.conf
+aws s3 cp $${website_asset_bucket}/config/nginx/wordpress.conf /etc/nginx/conf.d/wordpress.conf
 
 # Configure PHP-FPM
 # /etc/opt/remi/php81/php-fpm.d/www.conf
@@ -143,7 +68,7 @@ sudo chown nginx -R /var/www/html
 sudo find . -type d -exec chmod 755 {} \;
 sudo find . -type f -exec chmod 644 {} \;
 
-echo "----------- Fetching web credentials      -----------"
+echo "----------- Fetching credentials      -----------"
 export WORDPRESS_ADMIN=$(aws secretsmanager get-secret-value --secret-id=$WORDPRESS_ADMIN_SECRET_ID --region=$EC2_REGION | jq -r .SecretString)
 export WORDPRESS_PASSWORD=$(aws secretsmanager get-secret-value --secret-id=$WORDPRESS_PASSWORD_SECRET_ID --region=$EC2_REGION | jq -r .SecretString)
 export WORDPRESS_RDS_HOSTNAME=$(aws rds describe-db-instances --db-instance-identifier=$WORDPRESS_RDS_HOST_ID --region=$EC2_REGION | jq -r '.DBInstances[].Endpoint.Address')
@@ -158,8 +83,20 @@ sudo sed -i 's/localhost/'$WORDPRESS_RDS_HOSTNAME'/g' /var/www/html/wp-config.ph
 sudo sed -i 's/put your unique phrase here/lolsabub/g' /var/www/html/wp-config.php
 
 
-echo "----------- Initialising db for first run -----------"
-mysql -u $WORDPRESS_ADMIN -p$WORDPRESS_PASSWORD -h $WORDPRESS_RDS_HOSTNAME -e "CREATE DATABASE wordpress;"
+echo "----------- Installing WP-CLI and plugins -----------"
+(cd /tmp && curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar)
+sudo chmod +x /tmp/wp-cli.phar
+sudo mv /tmp/wp-cli.phar /usr/local/bin/wp
+
+aws s3 cp $${website_asset_bucket}/config/ /tmp/plugin.list
+
+while read plugin; do
+  wp plugin install $plugin --activate
+done </tmp/plugin.list
+
+echo "----------- Installing theme              -----------"
+(cd /var/www/html/wp-content/themes && git clone https://github.com/BurendoUK/burendo-website.git)
+mv /var/www/html/wp-content/themes/burendo-website /var/www/html/wp-content/themes/burendo
 
 echo "----------- Starting web services         -----------"
 
