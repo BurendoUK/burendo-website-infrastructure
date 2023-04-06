@@ -1,7 +1,6 @@
 resource "random_password" "wordpress_rds_admin" {
   length           = 8
-  special          = true
-  override_special = "_!%^"
+  special          = false
 }
 
 resource "random_password" "wordpress_rds_password" {
@@ -12,8 +11,7 @@ resource "random_password" "wordpress_rds_password" {
 
 resource "random_password" "wordpress_rds_schema" {
   length           = 8
-  special          = true
-  override_special = "_!%^"
+  special          = false
 }
 
 resource "aws_secretsmanager_secret" "wordpress_rds_admin" {

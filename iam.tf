@@ -63,7 +63,8 @@ data "aws_iam_policy_document" "wordpress_srv" {
     ]
 
     resources = [
-      aws_s3_bucket.website_assets.arn
+      aws_s3_bucket.website_assets.arn,
+      "${aws_s3_bucket.website_assets.arn}/*"
     ]
   }
 }

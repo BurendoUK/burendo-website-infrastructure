@@ -12,8 +12,8 @@ from dateutil.tz import tzlocal
 
 
 def main():
-    if not ("AWS_PROFILE" in os.environ or "AWSUME_PROFILE" in os.environ or "AWS_SECRETS_ROLE" in os.environ):
-        print("ERROR: Missing environment variables. Must contain either AWS_PROFILE (local) / AWSUME_PROFILE (local - using AWSume tool) or AWS_SECRETS_ROLE (GHA)")
+    if not ("AWS_PROFILE" in os.environ or "AWS_SECRETS_ROLE" in os.environ):
+        print("ERROR: Missing environment variables. Must contain either AWS_PROFILE (local) or AWS_SECRETS_ROLE (GHA)")
 
     secrets_manager = boto3.client("secretsmanager")
 

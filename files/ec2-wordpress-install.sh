@@ -3,6 +3,7 @@
 WORDPRESS_ADMIN_SECRET_ID="${wordpress_admin_secret_id}"
 WORDPRESS_PASSWORD_SECRET_ID="${wordpress_password_secret_id}"
 WORDPRESS_RDS_HOST_ID="${wordpress_rds_host_id}"
+WEBSITE_ASSET_BUCKET="${website_asset_bucket}"
 EC2_AVAIL_ZONE=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
 EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed 's/[a-z]$//'`"
 
@@ -33,10 +34,19 @@ sudo yum install php81 php81-php-fpm php81-php-mysqlnd -y
 sudo yum install jq git -y
 sudo amazon-linux-extras install nginx1 -y
 
-# Fetch NGINX from S3
+# Install WP-CLI
+(cd /tmp && curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar)
+sudo chmod +x /tmp/wp-cli.phar
+sudo mv /tmp/wp-cli.phar /usr/local/bin/wp
 
-aws s3 cp s3://$${website_asset_bucket}/config/nginx/nginx.conf /etc/nginx/nginx.conf
-aws s3 cp s3://$${website_asset_bucket}/config/nginx/wordpress.conf /etc/nginx/conf.d/wordpress.conf
+export PATH=$PATH:/usr/local/bin
+source ~/.bashrc
+sudo rm /usr/bin/php
+sudo ln -s /bin/php81 /usr/bin/php
+
+# Fetch NGINX from S3
+aws s3 cp s3://$WEBSITE_ASSET_BUCKET/config/nginx/nginx.conf /etc/nginx/nginx.conf
+aws s3 cp s3://$WEBSITE_ASSET_BUCKET/config/nginx/wordpress.conf /etc/nginx/conf.d/wordpress.conf
 
 # Configure PHP-FPM
 # /etc/opt/remi/php81/php-fpm.d/www.conf
@@ -56,7 +66,6 @@ sudo usermod -aG www nginx
 
 # Download and position WordPress
 sudo mkdir -p /var/www/html
-sudo chgrp www -R /var/www
 sudo wget https://wordpress.org/latest.tar.gz -P /var/www
 cd /var/www
 sudo tar -xvzf latest.tar.gz
@@ -65,8 +74,8 @@ sudo mv /var/www/wordpress/* /var/www/html
 # Set permissions for WordPress
 sudo chgrp www -R /var/www/html
 sudo chown nginx -R /var/www/html
-sudo find . -type d -exec chmod 755 {} \;
-sudo find . -type f -exec chmod 644 {} \;
+sudo find /var/www/html -type d -exec chmod 755 {} \;
+sudo find /var/www/html -type f -exec chmod 644 {} \;
 
 echo "----------- Fetching credentials      -----------"
 export WORDPRESS_ADMIN=$(aws secretsmanager get-secret-value --secret-id=$WORDPRESS_ADMIN_SECRET_ID --region=$EC2_REGION | jq -r .SecretString)
@@ -84,15 +93,12 @@ sudo sed -i 's/put your unique phrase here/lolsabub/g' /var/www/html/wp-config.p
 
 
 echo "----------- Installing WP-CLI and plugins -----------"
-(cd /tmp && curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar)
-sudo chmod +x /tmp/wp-cli.phar
-sudo mv /tmp/wp-cli.phar /usr/local/bin/wp
+aws s3 cp s3://$WEBSITE_ASSET_BUCKET/config/wordpress/plugins.list /tmp
 
-aws s3 cp ${website_asset_bucket}/config/ /tmp/plugin.list
-
+cd /var/www/html/
 while read plugin; do
   wp plugin install $plugin --activate
-done </tmp/plugin.list
+done </tmp/plugins.list
 
 echo "----------- Installing theme              -----------"
 (cd /var/www/html/wp-content/themes && git clone https://github.com/BurendoUK/burendo-website.git)
