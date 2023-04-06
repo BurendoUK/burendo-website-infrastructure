@@ -10,10 +10,10 @@ resource "aws_db_subnet_group" "wordpress_db" {
 resource "aws_db_instance" "wordpress_db" {
   allocated_storage      = 10
   identifier             = "${local.project_name}-wordpress-db"
-  db_name                = aws_secretsmanager_secret.wordpress_rds_schema.secret_string
+  db_name                = aws_secretsmanager_secret_version.wordpress_rds_schema.secret_string
   engine                 = "mysql"
   engine_version         = "5.7"
-  instance_class         = var.db_intance_class
+  instance_class         = var.db_instance_class
   username               = aws_secretsmanager_secret_version.wordpress_rds_admin.secret_string
   password               = aws_secretsmanager_secret_version.wordpress_rds_password.secret_string
   parameter_group_name   = "default.mysql5.7"

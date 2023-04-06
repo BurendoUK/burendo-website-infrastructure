@@ -54,6 +54,18 @@ data "aws_iam_policy_document" "wordpress_srv" {
       aws_secretsmanager_secret.wordpress_rds_password.arn,
     ]
   }
+
+  statement {
+    sid = "S3"
+
+    actions = [
+      "s3:*",
+    ]
+
+    resources = [
+      aws_s3_bucket.website_assets.arn
+    ]
+  }
 }
 
 resource "aws_iam_policy" "wordpress_srv_resources" {

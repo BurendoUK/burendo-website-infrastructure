@@ -35,8 +35,8 @@ sudo amazon-linux-extras install nginx1 -y
 
 # Fetch NGINX from S3
 
-aws s3 cp $${website_asset_bucket}/config/nginx/nginx.conf /etc/nginx/nginx.conf
-aws s3 cp $${website_asset_bucket}/config/nginx/wordpress.conf /etc/nginx/conf.d/wordpress.conf
+aws s3 cp s3://$${website_asset_bucket}/config/nginx/nginx.conf /etc/nginx/nginx.conf
+aws s3 cp s3://$${website_asset_bucket}/config/nginx/wordpress.conf /etc/nginx/conf.d/wordpress.conf
 
 # Configure PHP-FPM
 # /etc/opt/remi/php81/php-fpm.d/www.conf
@@ -88,7 +88,7 @@ echo "----------- Installing WP-CLI and plugins -----------"
 sudo chmod +x /tmp/wp-cli.phar
 sudo mv /tmp/wp-cli.phar /usr/local/bin/wp
 
-aws s3 cp $${website_asset_bucket}/config/ /tmp/plugin.list
+aws s3 cp ${website_asset_bucket}/config/ /tmp/plugin.list
 
 while read plugin; do
   wp plugin install $plugin --activate

@@ -12,7 +12,7 @@ resource "aws_vpc" "wordpress" {
 resource "aws_subnet" "private_wordpress" {
   for_each = local.private_cidr_sets
 
-  vpc_id            = aws_vpc.burendocom_wordpress.id
+  vpc_id            = aws_vpc.wordpress.id
   cidr_block        = each.value.range
   availability_zone = each.value.az
 
