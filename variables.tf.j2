@@ -5,3 +5,19 @@ variable "assume_role" {
 variable "region" {
   default = "{{terraform.state_file_region}}"
 }
+
+variable "aws_region" {
+  default = "eu-west-2"
+}
+
+variable "ec2_instance_class" {
+  default = "t3.micro"
+}
+
+variable "db_instance_class" {
+  default = "db.t3.micro"
+}
+
+variable "web_server_desired" {
+  default = "2"
+}

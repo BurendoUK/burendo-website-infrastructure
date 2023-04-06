@@ -31,9 +31,12 @@ def main():
             print("ERROR: Problem calling AWS SSM: {}".format(error_message))
         sys.exit(1)
 
-    config_data = yaml.load(terraform_secret['SecretBinary'], Loader=yaml.FullLoader)
-    config_data['terraform'] = json.loads(terraform_secret['SecretBinary'])["terraform"]
-    config_data['accounts'] = json.loads(terraform_secret['SecretBinary'])["accounts"]
+    config_data = yaml.load(
+        terraform_secret['SecretBinary'], Loader=yaml.FullLoader)
+    config_data['terraform'] = json.loads(
+        terraform_secret['SecretBinary'])["terraform"]
+    config_data['accounts'] = json.loads(
+        terraform_secret['SecretBinary'])["accounts"]
 
     with open("terraform.tf.j2") as in_template:
         template = jinja2.Template(in_template.read())
@@ -48,6 +51,7 @@ def main():
     with open("locals.tf", "w+") as terraform_tf:
         terraform_tf.write(template.render(config_data))
     print("Terraform config successfully created")
+
 
 if __name__ == "__main__":
     main()
