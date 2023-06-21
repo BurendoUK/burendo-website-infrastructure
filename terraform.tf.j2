@@ -15,10 +15,6 @@ terraform {
     aws = {
       version = "~> 4.0"
     }
-    awscc = {
-      source = "hashicorp/awscc"
-      version = "0.27.0"
-    }
   }
 }
 
@@ -30,10 +26,6 @@ provider "aws" {
 provider "aws" {
   # Required to be in N Virgina as Cloudfront doesn't use a certificate from a different region for SSL
   alias   = "northvirginia"
-  region = "us-east-1"
-}
-
-provider "awscc" {
   region = "us-east-1"
 }
 
