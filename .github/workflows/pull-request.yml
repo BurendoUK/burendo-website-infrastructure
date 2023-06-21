@@ -4,6 +4,7 @@ on:
     types: submitted
     paths-ignore:
       - "**/*.tf"
+      - "**/*.tf.j2"
 
 jobs:
   pull-request:
