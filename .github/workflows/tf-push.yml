@@ -5,6 +5,7 @@ on:
       - main
     paths:
       - "**/*.tf"
+      - "**/*.tf.j2"
 
 jobs:
   push:

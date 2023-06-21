@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - "**/*.tf"
-      - "**/*.j2"
+      - "**/*.tf.j2"
       - ".github/workflows/**"
   workflow_dispatch: {}
 
@@ -40,19 +40,19 @@ jobs:
       - name: "Bootstrap"
         id: bootstrap
         run: |
-          python bootstrap.py > ${{ github.workspace }}/${{ github.run_id }}-${{ github.run_number }}.log
+          python bootstrap.py
           sed -i "s/Administrator/ci/" variables.tf
         working-directory: .
         env:
-          TF_WORKSPACE: default
+          TF_WORKSPACE: burendo-prod
           AWS_SECRETS_ROLE: ${{ secrets.AWS_GHA_ROLE }}
           AWS_DEFAULT_REGION: eu-west-2
 
       - name: "Terraform Init"
         id: init
-        run: terraform init 
+        run: terraform init
         env:
-          TF_WORKSPACE: default
+          TF_WORKSPACE: burendo-prod
           AWS_DEFAULT_REGION: eu-west-2
 
       - name: "Terraform Plan"
@@ -60,9 +60,9 @@ jobs:
         run: terraform plan -no-color >> ${{ github.workspace }}/${{ github.run_id }}-${{ github.run_number }}.log
         continue-on-error: false
         env:
-          TF_WORKSPACE: default
+          TF_WORKSPACE: burendo-prod
           AWS_DEFAULT_REGION: eu-west-2
-      
+
       - name: "Terminate Session"
         if: ${{ always() }}
         id: terminate-session
@@ -70,17 +70,19 @@ jobs:
           set -e
           aws ssm terminate-session --session-id ${{ github.run_id }}-${{ github.run_number }}
 
-      - name: "Redact Logs PROD PR"
-        if: steps.plan.conclusion == 'failure'
-        id: redact-logs-prod-pr
+      - name: "Redact Logs PR"
+        if: ${{ always() }}
+        id: redact-logs-pr
         run: |
               sed -i "s/$ACC_PROD/REDACTED/g" ${{ github.workspace }}/${{ github.run_id }}-${{ github.run_number }}.log
         shell: bash
         env:
           ACC_PROD: ${{ secrets.AWS_GHA_ACC_PROD }}
 
-      - uses: actions/upload-artifact@v2
-        if: steps.redact-logs-prod-pr.conclusion == 'success'
+      - name: "Upload Plan log"
+        uses: actions/upload-artifact@v2
+        id: upload-plan-log
+        if: ${{ failure() }}
         with:
-          name: prod-workflow-log
+          name: pr-workflow-log
           path: ${{ github.workspace }}/${{ github.run_id }}-${{ github.run_number }}.log
