@@ -41,7 +41,7 @@ jobs:
         id: bootstrap
         run: |
           python bootstrap.py
-          sed -i "s/Administrator/ci/" terraform/variables.tf
+          sed -i "s/Administrator/ci/" variables.tf
         working-directory: .
         env:
           TF_WORKSPACE: burendo-prod
