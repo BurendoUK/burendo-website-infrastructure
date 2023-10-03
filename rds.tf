@@ -19,5 +19,5 @@ resource "aws_db_instance" "wordpress_db" {
   parameter_group_name   = "default.mysql5.7"
   db_subnet_group_name   = aws_db_subnet_group.wordpress_db.name
   vpc_security_group_ids = [aws_security_group.rds.id]
-  skip_final_snapshot    = false
+  skip_final_snapshot    = true
 }

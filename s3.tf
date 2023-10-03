@@ -1,5 +1,8 @@
 resource "aws_s3_bucket" "website_assets" {
   bucket = "${local.project_name}-assets-${local.environment}"
+  lifecycle {
+    ignore_changes = [bucket, tags]
+  }
 
   tags = {
     Name        = "${local.project_name}-assets-${local.environment}"
